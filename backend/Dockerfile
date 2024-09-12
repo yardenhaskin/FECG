@@ -1,17 +1,14 @@
-# Use the official Python image from the Docker Hub
-FROM python:3.9-slim
+# Use the official Python 3.10 image from the Docker Hub
+FROM python:3.10-slim
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the requirements file into the container
-COPY pyproject.toml .
+# Copy the project files into the container
+COPY . .
 
 # Install the dependencies
-RUN pip install flit && flit install --deps production
-
-# Copy the rest of the application code into the container
-COPY . .
+RUN pip install .
 
 # Expose the port the app runs on
 EXPOSE 5000

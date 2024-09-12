@@ -1,11 +1,24 @@
 [project]
-name = "flaskr"
+name = "backend"
 version = "1.0.0"
-description = "The basic blog app built in the Flask tutorial."
 dependencies = [
-    "flask==2.1.1",
+  "Flask>3.0.0"
+]
+requires-python = ">=3.10"
+authors = [
+  {name = "Doron Firman", email = "doronfi3@gmail.com"},
+]
+maintainers = [
+  {name = "Doron Firman", email = "doronfi3@gmail.com"},
+]
+description = "Basic flask server for ECG data"
+#readme = "README.rst"
+#license = {file = "LICENSE.txt"}
+keywords = ["AI", "ML", "ECG"]
+classifiers = [
+  "Development Status :: 1 - Planning",
+  "Programming Language :: Python :: 3.10"
 ]
 
-[build-system]
-requires = ["flit_core<4"]
-build-backend = "flit_core.buildapi"
+[tool.setuptools]
+packages = ["server", "instance"]
