@@ -1,5 +1,8 @@
+__version__ = "1.0.0"
+
 import os
 from flask import Flask
+
 
 def create_app(test_config=None):
     # create and configure the app
@@ -26,7 +29,7 @@ def create_app(test_config=None):
     app.register_blueprint(routes.bp)
 
     # a simple page that says hello
-    @app.route('/hello')
+    @app.route('/')
     def hello():
         return 'Hello, World!'
 
