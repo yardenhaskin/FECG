@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import subprocess
-import ctypes
+import tkinter as tk
+from tkinter import messagebox
 
 
 def check_docker_running():
@@ -13,7 +14,10 @@ def check_docker_running():
 
 
 def show_error_message(message):
-    ctypes.windll.user32.MessageBoxW(0, message, "Error", 0x10)
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window
+    messagebox.showerror("Error", message)
+    root.destroy()
 
 
 def run_docker():
