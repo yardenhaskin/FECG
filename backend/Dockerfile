@@ -13,5 +13,9 @@ RUN pip install -r requirements.txt
 # Expose the port the app runs on
 EXPOSE 5000
 
+# Set environment variables
+ENV FLASK_APP="server:create_app"
+ENV FLASK_ENV=development
+
 # Define the command to run the application
-CMD ["flask", "run", "--host=0.0.0.0"]
+CMD ["python", "-m", "flask", "run", "--host=0.0.0.0"]

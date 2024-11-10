@@ -14,5 +14,4 @@ message CapturedECGData {
     AbdominalData abdominal_data = 1;
     ChestData chest_data = 2;
     string timestamp = 3;
-    string id = 4;
 }

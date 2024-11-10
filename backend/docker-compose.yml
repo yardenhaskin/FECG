@@ -6,5 +6,6 @@ services:
     environment:
       FLASK_APP: "server"
       FLASK_ENV: "development"
+      PYTHONPATH: "/app"
     volumes:
       - .:/app
