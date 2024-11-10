@@ -2,7 +2,7 @@ import logging
 import os
 
 import torch
-from .ResnetNetwork import *
+from ..ResnetNetwork import *
 from flask import Blueprint, jsonify
 from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData
 
