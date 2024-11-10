@@ -149,7 +149,7 @@
 #######
 import torch
 import torch.distributed as dist
-from .ResnetBasics import *
+from server.ResnetBasics import *
 
 
 class ResNetEncoder(nn.Module):

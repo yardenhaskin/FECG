@@ -1,4 +1,4 @@
-from .HelpFunctions import *
+from server.HelpFunctions import *
 from torch import nn
 
 

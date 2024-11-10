@@ -1,7 +1,9 @@
 import logging
 import os
+import sys
 
-import torch
+sys.path.append('/app/server')
+
 from ..ResnetNetwork import *
 from flask import Blueprint, jsonify
 from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData
@@ -52,16 +54,8 @@ def load_model():
     global model
 
     try:
-        logging.debug("Starting to load the model")
-
-        # Log the current working directory
-        logging.debug(f"Contents of app directory: {os.listdir(os.getcwd())}")
-        server_dir = os.path.join(os.getcwd(), 'server')
-        logging.debug(f"Contents of server directory: {os.listdir(server_dir)}")
-
         # Load the pre-trained model based on the id
         model_path = os.path.join(os.getcwd(), f"server/db/models/last_model_2024-11-05.pth")
-        logging.debug(f"Model path: {model_path}")
         model = torch.load(model_path, map_location=torch.device('cpu'))
 
         return jsonify({
