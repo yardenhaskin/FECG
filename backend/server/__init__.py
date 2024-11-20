@@ -2,6 +2,8 @@ __version__ = "1.0.0"
 
 import os
 from flask import Flask
+from .routes import routes
+# import routes.routes as routes # for local testing
 
 
 def create_app(test_config=None):
@@ -25,7 +27,6 @@ def create_app(test_config=None):
         pass
 
     # register the blueprint
-    from .routes import routes
     app.register_blueprint(routes.bp)
 
     # a simple page that says hello
@@ -34,3 +35,8 @@ def create_app(test_config=None):
         return 'Hello, World!'
 
     return app
+
+
+if __name__ == "__main__":
+    app = create_app()
+    app.run(host='0.0.0.0', port=5000)

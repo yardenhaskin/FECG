@@ -149,7 +149,8 @@
 #######
 import torch
 import torch.distributed as dist
-from server.ResnetBasics import *
+# from ResnetBasics import * # for local testing
+from server.ResnetBasics import * # for docker
 
 
 class ResNetEncoder(nn.Module):
@@ -262,6 +263,13 @@ class ResNet(nn.Module):
         self.Fdecoder = ResnetDecoder()
 
     def forward(self, x):
+        # Added this to make it work on CPU
+        os.environ['RANK'] = '0'  # Process rank (e.g., 0 for master process)
+        os.environ['WORLD_SIZE'] = '1'  # Total number of processes
+        os.environ['MASTER_ADDR'] = '127.0.0.1'  # Address for rendezvous
+        os.environ['MASTER_PORT'] = '12355'  # Port for rendezvous
+        dist.init_process_group(backend='gloo')
+
         x = self.encoder(x)
         latent_half = x.size()[1] // 2
         m = x[:, :latent_half, :]
@@ -278,6 +286,7 @@ class ResNet(nn.Module):
     def gather_tensor(self, tensor):
         # Ensure tensor is contiguous
         tensor = tensor.contiguous()
+
 
         # Prepare an empty list to gather tensors across processes
         tensors_gather = [torch.zeros_like(tensor) for _ in range(dist.get_world_size())]
