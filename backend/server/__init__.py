@@ -2,7 +2,7 @@ __version__ = "1.0.0"
 
 import os
 from flask import Flask
-from .routes import routes
+from .routes import routes # For docker
 # import routes.routes as routes # for local testing
 
 

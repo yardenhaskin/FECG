@@ -256,19 +256,26 @@ class ResnetDecoder(nn.Module):
 
 
 class ResNet(nn.Module):
+    _process_group_initialized = False  # Class-level flag to track initialization
     def __init__(self, in_channels, *args, **kwargs):
         super().__init__()
         self.encoder = ResNetEncoder(in_channels, *args, **kwargs)
         self.Mdecoder = ResnetDecoder()
         self.Fdecoder = ResnetDecoder()
 
-    def forward(self, x):
-        # Added this to make it work on CPU
+    def _initialize_process_group(self):
         os.environ['RANK'] = '0'  # Process rank (e.g., 0 for master process)
         os.environ['WORLD_SIZE'] = '1'  # Total number of processes
         os.environ['MASTER_ADDR'] = '127.0.0.1'  # Address for rendezvous
         os.environ['MASTER_PORT'] = '12355'  # Port for rendezvous
-        dist.init_process_group(backend='gloo')
+        if not dist.is_initialized():
+            dist.init_process_group(backend='gloo')
+
+    def forward(self, x):
+        # Initialize the process group only once
+        if not ResNet._process_group_initialized:
+            self._initialize_process_group()
+            ResNet._process_group_initialized = True
 
         x = self.encoder(x)
         latent_half = x.size()[1] // 2
