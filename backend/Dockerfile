@@ -19,3 +19,5 @@ ENV FLASK_ENV=development
 
 # Define the command to run the application
 CMD ["python", "-m", "flask", "run", "--host=0.0.0.0"]
+# Testing threads on model
+#CMD ["python", "/app/server/routes/__init__.py"]

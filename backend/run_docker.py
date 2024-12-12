@@ -3,6 +3,7 @@
 import subprocess
 import tkinter as tk
 from tkinter import messagebox
+import os
 
 
 def check_docker_installed():
@@ -16,6 +17,14 @@ def check_docker_installed():
 def check_docker_running():
     try:
         subprocess.check_call(['docker', 'info'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
+def check_docker_compose_installed():
+    try:
+        subprocess.check_call(['docker-compose', '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     except subprocess.CalledProcessError:
         return False
@@ -35,6 +44,14 @@ def run_docker():
 
     if not check_docker_running():
         show_error_message("Docker is not running. Please start Docker and try again.")
+        return
+
+    if not check_docker_compose_installed():
+        show_error_message("Docker Compose is not installed. Please install Docker Compose from https://docs.docker.com/compose/ and try again.")
+        return
+
+    if not os.path.exists('docker-compose.yml'):
+        show_error_message("No docker-compose.yml file found. Please ensure you're in the correct directory with the Docker Compose file.")
         return
 
     try:

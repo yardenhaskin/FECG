@@ -1,15 +1,15 @@
 import logging
+import os
 import sys
 import time
-import flask
 
 sys.path.append('/app/server')
 
-from ResnetNetwork import *  # for local testing
-from ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for local testing
-# from ..ResnetNetwork import *  # for docker
-# from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for docker
-from flask import Blueprint, jsonify, request, Response, stream_with_context, current_app
+# from ResnetNetwork import *  # for local testing
+# from ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for local testing
+from ..ResnetNetwork import *  # for docker
+from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for docker
+from flask import Blueprint, jsonify, request, Response, stream_with_context
 
 abdominal_data = AbdominalData()
 
@@ -71,8 +71,8 @@ def load_model():
 
     try:
         # Load the pre-trained model based on the id
-        model_path = f"db/models/last_model_2024-11-16.pt"  # for local testing
-        # model_path = os.path.join(os.getcwd(), f"server/db/models/last_model_2024-11-16.pt")  # model.module for docker
+        # model_path = f"db/models/last_model_2024-11-16.pt"  # for local testing
+        model_path = os.path.join(os.getcwd(), f"server/db/models/last_model_2024-11-16.pt")  # model.module for docker
         model = torch.load(model_path, map_location=torch.device('cpu'))
 
         return jsonify({
@@ -124,28 +124,27 @@ def separate_ecg():
 
 def process_chunk(message_bytes):
     try:
-        with current_app.app_context():
-            logging.debug(flask.has_app_context())
-            # Parse the Protobuf message
-            ecg_data = CapturedECGData()
-            ecg_data.ParseFromString(message_bytes)
 
-            # Validate the parsed data
-            data = {
-                'abdominal_data': ecg_data.abdominal_data,
-                'chest_data': ecg_data.chest_data,
-                'timestamp': ecg_data.timestamp,
-            }
-            is_valid, error_message = validate_data_train(data)
-            if not is_valid:
-                return jsonify({'error': error_message}), 400
+        # Parse the Protobuf message
+        ecg_data = CapturedECGData()
+        ecg_data.ParseFromString(message_bytes)
 
-            # Process the parsed message
-            return process_ecg_data(
-                ecg_data.abdominal_data.values,
-                ecg_data.chest_data.values,
-                ecg_data.timestamp
-            )
+        # Validate the parsed data
+        data = {
+            'abdominal_data': ecg_data.abdominal_data,
+            'chest_data': ecg_data.chest_data,
+            'timestamp': ecg_data.timestamp,
+        }
+        is_valid, error_message = validate_data_train(data)
+        if not is_valid:
+            return jsonify({'error': error_message}), 400
+
+        # Process the parsed message
+        return process_ecg_data(
+            ecg_data.abdominal_data.values,
+            ecg_data.chest_data.values,
+            ecg_data.timestamp
+        )
 
     except Exception as e:
         logging.error(f"Failed to parse Protobuf message: {str(e)}")
