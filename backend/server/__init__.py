@@ -2,8 +2,8 @@ __version__ = "1.0.0"
 
 import os
 from flask import Flask
-from .routes import routes # For docker
-# import routes.routes as routes # for local testing
+# from .routes import routes # For docker
+import routes.routes as routes  # for local testing
 
 
 def create_app(test_config=None):
@@ -39,4 +39,4 @@ def create_app(test_config=None):
 
 if __name__ == "__main__":
     app = create_app()
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, threaded=True)

@@ -1,15 +1,15 @@
 import logging
-import os
 import sys
-import json
+import time
+import flask
 
 sys.path.append('/app/server')
 
-# from ResnetNetwork import *  # for local testing
-# from ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for local testing
-from ..ResnetNetwork import *  # for docker
-from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for docker
-from flask import Blueprint, jsonify, request, Response, stream_with_context
+from ResnetNetwork import *  # for local testing
+from ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for local testing
+# from ..ResnetNetwork import *  # for docker
+# from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for docker
+from flask import Blueprint, jsonify, request, Response, stream_with_context, current_app
 
 abdominal_data = AbdominalData()
 
@@ -17,6 +17,10 @@ bp = Blueprint('routes', __name__)
 
 # Global variable to store the loaded model
 model = None
+
+MAX_WORKERS = 4
+
+EXPECTED_SIZE = 8226  # Size threshold in bytes for a complete Protobuf message
 
 
 def is_valid_protobuf(data, field, protobuf_class):
@@ -27,13 +31,22 @@ def is_valid_protobuf(data, field, protobuf_class):
 
 
 def validate_data_train(data):
-    if not data or 'abdominal_data' not in data or 'chest_data' not in data or 'timestamp' not in data:
-        return False, "Invalid request parameters"
+    # Check if all required fields are present
+    missing_fields = [field for field in ['abdominal_data', 'chest_data', 'timestamp'] if field not in data]
+    if missing_fields:
+        return False, f"Missing required fields: {', '.join(missing_fields)}"
 
+    # Validate individual fields using Protobuf classes
     for field, protobuf_class in [('abdominal_data', AbdominalData), ('chest_data', ChestData)]:
         is_valid, error_message = is_valid_protobuf(data, field, protobuf_class)
         if not is_valid:
             return False, error_message
+
+    # Validate timestamp format (basic example, can be enhanced)
+    try:
+        time.strptime(data['timestamp'], "%Y-%m-%dT%H:%M:%SZ")
+    except ValueError:
+        return False, "Invalid timestamp format, expected ISO 8601 (e.g., '2024-10-27T12:00:00Z')"
 
     return True, ""
 
@@ -58,8 +71,8 @@ def load_model():
 
     try:
         # Load the pre-trained model based on the id
-        # model_path = f"db/models/last_model_2024-11-16.pt"  # for local testing
-        model_path = os.path.join(os.getcwd(), f"server/db/models/last_model_2024-11-16.pt")  # model.module for docker
+        model_path = f"db/models/last_model_2024-11-16.pt"  # for local testing
+        # model_path = os.path.join(os.getcwd(), f"server/db/models/last_model_2024-11-16.pt")  # model.module for docker
         model = torch.load(model_path, map_location=torch.device('cpu'))
 
         return jsonify({
@@ -74,11 +87,9 @@ def load_model():
 
 @bp.route('/separate-ecg', methods=['POST'])
 def separate_ecg():
-    EXPECTED_SIZE = 8226  # Size threshold in bytes
+    start_time = time.time()  # Start timer
     global model
-    device = torch.device('cpu')
 
-    # try:
     if model is None:
         return jsonify({"error": "Model is not loaded"}), 500
 
@@ -90,38 +101,55 @@ def separate_ecg():
 
             # Process complete messages from the buffer
             while len(buffer) >= EXPECTED_SIZE:
-                try:
-                    # Extract a single complete message
-                    message_bytes = buffer[:EXPECTED_SIZE]
-                    buffer = buffer[EXPECTED_SIZE:]  # Retain extra data for the next message
-
-                    # Parse the Protobuf message
-                    ecg_data = CapturedECGData()
-                    ecg_data.ParseFromString(message_bytes)
-
-                    # Process the parsed message
-                    response, status_code = process_ecg_data(
-                        ecg_data.abdominal_data.values,
-                        ecg_data.chest_data.values,
-                        ecg_data.timestamp
-                    )
-                    if status_code == 200:
-                        yield f"data: {response.get_data(as_text=True)}\n\n"
-                    else:
-                        logging.debug(f"Error response: {response.get_data(as_text=True)}")  # Debug log
-                        yield f"data: {response.get_data(as_text=True)}\n\n"
-
-                except Exception as e:
-                    logging.debug("Protobuf Parsing Error:", str(e))
-                    yield f"data: {jsonify({'error': 'Failed to parse Protobuf message'}).get_data(as_text=True)}\n\n"
+                # Extract a single complete message
+                message_bytes = buffer[:EXPECTED_SIZE]
+                buffer = buffer[EXPECTED_SIZE:]  # Retain extra data for the next message
+                response = process_chunk(message_bytes)  # Process the extracted message
+                if response[1] != 200:
+                    logging.error(f"Error processing Protobuf message: {response[0]}")
+                yield f"data: {response[0].get_data(as_text=True)}\n\n"
 
         # Handle any remaining incomplete message in the buffer
         if len(buffer) > 0:
             logging.debug(f"Incomplete message remaining in buffer: {len(buffer)} bytes")
             yield f"data: {jsonify({'error': 'Incomplete Protobuf message received'}).get_data(as_text=True)}\n\n"
 
+        # Calculate and log total processing time
+        total_time = time.time() - start_time
+        logging.info(f"Total processing time for /separate-ecg: {total_time:.6f} seconds")
+
     # Return a stream response using server-sent events
     return Response(stream_with_context(stream_responses()), content_type='text/event-stream')
+
+
+def process_chunk(message_bytes):
+    try:
+        with current_app.app_context():
+            logging.debug(flask.has_app_context())
+            # Parse the Protobuf message
+            ecg_data = CapturedECGData()
+            ecg_data.ParseFromString(message_bytes)
+
+            # Validate the parsed data
+            data = {
+                'abdominal_data': ecg_data.abdominal_data,
+                'chest_data': ecg_data.chest_data,
+                'timestamp': ecg_data.timestamp,
+            }
+            is_valid, error_message = validate_data_train(data)
+            if not is_valid:
+                return jsonify({'error': error_message}), 400
+
+            # Process the parsed message
+            return process_ecg_data(
+                ecg_data.abdominal_data.values,
+                ecg_data.chest_data.values,
+                ecg_data.timestamp
+            )
+
+    except Exception as e:
+        logging.error(f"Failed to parse Protobuf message: {str(e)}")
+        return jsonify({'error': 'Failed to parse Protobuf message'}), 400
 
 
 def process_ecg_data(abdominal_data, chest_data, timestamp):
@@ -139,10 +167,20 @@ def process_ecg_data(abdominal_data, chest_data, timestamp):
     chest_tensor = torch.tensor(chest_data).view(1, 1, 1024).float().to(device)
     input_tensor = torch.cat((abdominal_tensor, chest_tensor), dim=1)  # Shape: [1, 2, 1024]
 
+    # TODO: Run inference with the loaded model on the actual data and use the trained model to process the data (save? output?)
     try:
+        # Start the timer
+        start_time = time.time()
         # Perform inference inside the try block
         with torch.no_grad():
             model_output = model(input_tensor)
+
+        # End the timer
+        end_time = time.time()
+
+        # Calculate elapsed time
+        elapsed_time = end_time - start_time
+        logging.info(f"Processing time for a single input: {elapsed_time:.6f} seconds")
 
         fetal_ecg, tensor2, maternal_ecg, tensor4 = model_output
 
