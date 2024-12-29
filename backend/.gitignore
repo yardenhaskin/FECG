@@ -1,3 +1,4 @@
 # Ignore build and distribution directories
 build/
 
+server/db/models/
