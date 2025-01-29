@@ -1,14 +1,16 @@
+import json
 import logging
-import os
 import sys
 import time
+import os
+import torch
 
 sys.path.append('/app/server')
 
-# from ResnetNetwork import *  # for local testing
-# from ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for local testing
-from ..ResnetNetwork import *  # for docker
-from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for docker
+from ResnetNetwork import *  # for local testing
+from ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for local testing
+# from ..ResnetNetwork import *  # for docker
+# from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for docker
 from flask import Blueprint, jsonify, request, Response, stream_with_context
 
 abdominal_data = AbdominalData()
@@ -51,6 +53,100 @@ def validate_data_train(data):
     return True, ""
 
 
+@bp.route('/user/<id>', methods=['GET'])
+def get_user(id):
+    try:
+        # Path to the users directory
+        user_file_path = os.path.join(os.getcwd(), 'server/db/users/users.json')
+
+        # Read the content of the user file
+        with open(user_file_path, 'r') as file:
+            users_data = json.load(file)
+
+        # Find the user with the matching id
+        user_data = next((user for user in users_data['users'] if user['id'] == id), None)
+
+        if user_data is None:
+            return jsonify({"error": "User not found"}), 404
+
+        return jsonify({"user_data": user_data}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route('/user/<id>', methods=['POST'])
+def modify_user(id):
+    try:
+        data = request.get_json()
+        # TODO: Validate the request JSON payload
+        # TODO: parse the request JSON payload
+        # Path to the users directory
+        user_file_path = os.path.join(os.getcwd(), f"server/db/users/users.json")
+
+        with open(user_file_path, 'r') as file:
+            users_data = json.load(file)
+
+        # Find the user with the matching id
+        user_data = next((user for user in users_data['users'] if user['id'] == id), None)
+
+        if user_data is None:
+            # TODO: Add the user to the users file
+            return jsonify({"Success: User added successfully"}), 200
+        else:
+            # TODO: Update the user file
+            return jsonify({"Success: User updated successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route('/user/<id>', methods=['DELETE'])
+def delete_user(id):
+    try:
+        # Path to the users directory
+        user_file_path = os.path.join(os.getcwd(), 'server/db/users/users.json')
+
+        # TODO: also delete model
+
+        with open(user_file_path, 'r') as file:
+            users_data = json.load(file)
+
+        # Find the user with the matching id
+        user_data = next((user for user in users_data['users'] if user['id'] == id), None)
+
+        if user_data is None:
+            return jsonify({"error": "User not found"}), 404
+        else:
+            # Remove the user from the list
+            users_data['users'] = [user for user in users_data['users'] if user['id'] != id]
+
+            # Write the updated data back to the file
+            with open(user_file_path, 'w') as file:
+                json.dump(users_data, file)
+
+            return jsonify({"success": "User deleted successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route('/models', methods=['GET'])
+def get_all_models_names():
+    try:
+        # Path to the models directory
+        models_dir = os.path.join(os.getcwd(), 'server/db/models')
+
+        # List all files in the models directory
+        model_files = os.listdir(models_dir)
+
+        # Filter out non-model files if necessary (e.g., by extension)
+        model_names = [f for f in model_files if f.endswith('.pt')]
+
+        return jsonify({"models": model_names}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @bp.route('/size', methods=['GET'])  # Get the size of the protobuf message
 def get_size():
     ecg_sample = CapturedECGData(
@@ -70,15 +166,31 @@ def load_model():
     global model
 
     try:
+        # Get the model id from the request JSON payload
+        data = request.get_json()
+        model_id = data.get('id')  # Default model id if not provided
+
+        if model_id is None:
+            return jsonify({"error": "ID doesnt match a model"}), 400
+
         # Load the pre-trained model based on the id
-        # model_path = f"db/models/last_model_2024-11-16.pt"  # for local testing
-        model_path = os.path.join(os.getcwd(), f"server/db/models/last_model_2024-11-16.pt")  # model.module for docker
+        if False:
+            # TODO: check if id exists
+            model_path = f"db/models/{model_id}.pt"  # for local testing
+            # model_path = os.path.join(os.getcwd(), f"server/db/models/{model_id}.pt")
+        else:
+            model_path = f"db/models/base_model_16-11-24.pt"  # for local testing
+            # model_path = os.path.join(os.getcwd(), f"db/models/base_model_16-11-24.pt".pt")
+        if torch.cuda.is_available():
+            logging.error("CUDA is enabled.")
+        else:
+            logging.error("CUDA is not available")
         model = torch.load(model_path, map_location=torch.device('cpu'))
 
         return jsonify({
             "status": "success",
             "message": "Model loaded successfully.",
-            "model_id": f"last_model_2024-11-16"
+            "model_id": model_id
         }), 200
     except Exception as e:
         logging.error(f"Error loading model: {str(e)}")

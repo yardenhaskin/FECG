@@ -9,10 +9,10 @@ import numpy as np
 
 sys.path.append('/app/server')
 
-# from ResnetNetwork import *  # for local testing
-# from ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for local testing
-from ..ResnetNetwork import *  # for docker
-from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for docker
+from ResnetNetwork import *  # for local testing
+from ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for local testing
+# from ..ResnetNetwork import *  # for docker
+# from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for docker
 
 # Global variable for the model
 model = None
@@ -24,8 +24,8 @@ EXPECTED_SIZE = 8226  # Size threshold for a complete Protobuf message
 def load_model():
     global model
     try:
-        # model_path = f"../db/models/last_model_2024-11-16.pt"  # Adjust path as needed
-        model_path = os.path.join(os.getcwd(), f"server/db/models/last_model_2024-11-16.pt")  # model.module for docker
+        # model_path = f"../db/models/base_model_16-11-24.pt"  # Adjust path as needed
+        model_path = os.path.join(os.getcwd(), f"server/db/models/base_model_16-11-24.pt")  # model.module for docker
         model = torch.load(model_path, map_location=torch.device('cpu'))
         logging.info("Model loaded successfully.")
     except Exception as e:
