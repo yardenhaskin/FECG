@@ -9,7 +9,7 @@ model_url = "http://localhost:5000/load-model"  # URL to load the model
 
 # Function to generate and validate protobuf data
 def generate_protobuf_data():
-    for i in range(12):  # Simulate sending 5 protobuf message
+    for i in range(5):  # Simulate sending 5 protobuf message
         # Example data for abdominal and chest
         abdominal_values = [0.1 * j for j in range(1024)]  # Example abdominal data
         chest_values = [0.2 * j for j in range(1024)]  # Example chest data

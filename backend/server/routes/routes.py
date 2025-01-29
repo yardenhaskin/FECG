@@ -185,7 +185,9 @@ def load_model():
             logging.error("CUDA is enabled.")
         else:
             logging.error("CUDA is not available")
-        model = torch.load(model_path, map_location=torch.device('cpu'))
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model = torch.load(model_path, map_location=device)
 
         return jsonify({
             "status": "success",
@@ -265,7 +267,7 @@ def process_chunk(message_bytes):
 
 def process_ecg_data(abdominal_data, chest_data, timestamp):
     global model
-    device = torch.device('cpu')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if model is None:
         return jsonify({"error": "Model is not loaded"}), 500
