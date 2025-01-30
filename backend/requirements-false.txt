@@ -9,6 +9,7 @@ torch==2.3.1+cpu
 torchaudio==2.3.1+cpu
 torchvision==0.18.1+cpu
 scipy==1.14.1
+orjson~=3.10.15
 
 
 

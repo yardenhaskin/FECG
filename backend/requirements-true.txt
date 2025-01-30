@@ -11,3 +11,4 @@ protobuf~=5.28.0
 google~=3.0.0
 numpy~=1.24.2
 scipy==1.14.1
+orjson~=3.10.15
