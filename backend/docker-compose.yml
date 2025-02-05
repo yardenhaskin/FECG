@@ -9,3 +9,11 @@ services:
       PYTHONPATH: "/app"
     volumes:
       - .:/app
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    runtime: ${RUNTIME:-runc}  # Fallback to CPU if RUNTIME is not set

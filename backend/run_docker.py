@@ -62,9 +62,11 @@ def run_docker():
     if check_cuda_gpu_available():
         print("CUDA-compatible GPU detected! Running Docker container with GPU support...")
         try:
+            env = os.environ.copy()
+            env['RUNTIME'] = 'nvidia'
             # Build and run the Docker container with GPU support, passing USE_GPU=true
             subprocess.check_call(['docker-compose', 'build', '--build-arg', 'USE_GPU=true'])
-            subprocess.check_call(['docker-compose', 'up', '--remove-orphans', '--gpus', 'all'])
+            subprocess.check_call(['docker-compose', 'up', '--remove-orphans'])
         except subprocess.CalledProcessError as e:
             show_error_message(f"An error occurred: {e}")
     else:

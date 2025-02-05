@@ -3,12 +3,3 @@
 torch==2.4.1+cu124
 torchaudio==2.4.1+cu124
 torchvision==0.19.1+cu124
-
-# Default PyPI repository for other dependencies
-joblib~=1.4.2
-Flask~=3.0.3
-protobuf~=5.28.0
-google~=3.0.0
-numpy~=1.24.2
-scipy==1.14.1
-orjson~=3.10.15
