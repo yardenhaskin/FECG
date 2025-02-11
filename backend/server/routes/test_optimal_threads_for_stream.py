@@ -15,18 +15,18 @@ from ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for local 
 # from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for docker
 
 # Global variable for the model
-model = None
+global_model = None
 
 MAX_WORKERS = 10
 EXPECTED_SIZE = 8226  # Size threshold for a complete Protobuf message
 
 # Simulate loading a pre-trained model
 def load_model():
-    global model
+    global global_model
     try:
         # model_path = f"../db/models/base_model_16-11-24.pt"  # Adjust path as needed
-        model_path = os.path.join(os.getcwd(), f"server/db/models/base_model_16-11-24.pt")  # model.module for docker
-        model = torch.load(model_path, map_location=torch.device('cpu'))
+        model_path = os.path.join(os.getcwd(), f"../db/models/base_model_16-11-24.pt")  # model.module for docker
+        global_model = torch.load(model_path, map_location=torch.device('cpu'))
         logging.info("Model loaded successfully.")
     except Exception as e:
         logging.error(f"Error loading model: {str(e)}")
@@ -49,7 +49,7 @@ def process_chunk(message_bytes):
         input_tensor = torch.cat((abdominal_tensor, chest_tensor), dim=1)
 
         with torch.no_grad():
-            model_output = model(input_tensor)
+            model_output = global_model(input_tensor)
 
         return model_output
     except Exception as e:

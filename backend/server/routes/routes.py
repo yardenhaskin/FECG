@@ -3,35 +3,27 @@ import sys
 import time
 import logging
 import threading
-
 import torch
 import orjson
-
 from flask import Blueprint, jsonify, request, Response, stream_with_context
-
-# Append the server directory to sys.path
-sys.path.append('/app/server')
 
 # Import local modules
 from ResnetNetwork import *  # for local testing
 from ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for local testing
 
+# Import docker modules
 # from ..ResnetNetwork import *  # for Docker
 # from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for Docker
+
+# Append the server directory to sys.path
+sys.path.append('/app/server')
 
 # Initialize Flask Blueprint
 bp = Blueprint('routes', __name__)
 
-# Global variable to store the model
-model = None
-
-# Constants
-EXPECTED_SIZE = 8226  # Protobuf message size threshold in bytes
-
-# Set device
+global_model = None
+PROTOBUF_MESSAGE_SIZE_BYTES = 8226
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# Preallocate input tensor (on GPU)
 input_tensor = torch.empty((1, 2, 1024), dtype=torch.float32, device=DEVICE)
 
 # Configure logging
@@ -40,12 +32,12 @@ logging.basicConfig(level=logging.DEBUG)
 
 def keep_gpu_warm():
     """Keeps the GPU active by running periodic inference."""
-    global model
+    global global_model
     while True:
         try:
-            if model is not None:
+            if global_model is not None:
                 with torch.no_grad():
-                    _ = model(torch.randn(1, 2, 1024, dtype=torch.float32, device=DEVICE))
+                    _ = global_model(torch.randn(1, 2, 1024, dtype=torch.float32, device=DEVICE))
             time.sleep(0.05)  # Adjust based on load
         except Exception as e:
             print(f"GPU warm-up thread error: {e}")  # Log errors instead of silent failure
@@ -55,15 +47,6 @@ def keep_gpu_warm():
 def start_gpu_warmup():
     warmup_thread = threading.Thread(target=keep_gpu_warm, daemon=True)
     warmup_thread.start()
-
-
-def warmup_model(loaded_model, device):
-    logging.info("Warming up GPU...")
-    dummy_input = torch.randn(1, 2, 1024, dtype=torch.float32, device=device)
-    with torch.no_grad():
-        for _ in range(10):  # Run multiple times for better optimization
-            _ = loaded_model(dummy_input)
-    logging.info("GPU warm-up complete!")
 
 
 def is_valid_protobuf(data, field, protobuf_class):
@@ -201,7 +184,7 @@ def get_size():
 
 @bp.route('/load-model', methods=['POST'])
 def load_model():
-    global model
+    global global_model
 
     try:
         # Get the model id from the request JSON payload
@@ -224,7 +207,7 @@ def load_model():
         else:
             logging.info("CUDA is not available")
 
-        model = torch.load(model_path, map_location=DEVICE)
+        global_model = torch.load(model_path, map_location=DEVICE)
 
         # Warm-up GPU
         # warmup_model(model, DEVICE)
@@ -243,9 +226,9 @@ def load_model():
 @bp.route('/separate-ecg', methods=['POST'])
 def separate_ecg():
     start_time = time.time()  # Start timer
-    global model
+    global global_model
 
-    if model is None:
+    if global_model is None:
         return orjson.dumps({"error": "Model is not loaded"}), 500
 
     try:
@@ -267,43 +250,6 @@ def separate_ecg():
     except Exception as e:
         logging.error(f"Error processing request: {str(e)}")
         return orjson.dumps({"error": str(e)}), 500
-
-
-# For working with stream data
-# @bp.route('/separate-ecg', methods=['POST'])
-# def separate_ecg():
-#     start_time = time.time()  # Start timer
-#     global model
-#
-#     if model is None:
-#         return orjson.dumps({"error": "Model is not loaded"}), 500
-#
-#     def stream_responses():
-#         buffer = b''  # Initialize an empty buffer to accumulate chunks
-#
-#         for chunk in request.stream:
-#             buffer += chunk  # Add chunk to the buffer
-#
-#             # Process complete messages from the buffer
-#             while len(buffer) >= EXPECTED_SIZE:
-#                 # Extract a single complete message
-#                 message_bytes = buffer[:EXPECTED_SIZE]
-#                 buffer = buffer[EXPECTED_SIZE:]  # Retain extra data for the next message
-#                 response = process_chunk(message_bytes)  # Process the extracted message
-#                 if response[1] != 200:
-#                     logging.error(f"Error processing Protobuf message: {response[0]}")
-#                 yield f"data: {response[0].get_data(as_text=True)}\n\n"
-#
-#         # Handle any remaining incomplete message in the buffer
-#         if len(buffer) > 0:
-#             yield f"data: {orjson.dumps({'error': 'Incomplete Protobuf message received'}).get_data(as_text=True)}\n\n"
-#
-#         # Calculate and log total processing time
-#         total_time = time.time() - start_time
-#         logging.info(f"Total processing time for /separate-ecg: {total_time:.6f} seconds")
-#
-#     # Return a stream response using server-sent events
-#     return Response(stream_with_context(stream_responses()), content_type='text/event-stream')
 
 
 def process_chunk(message_bytes):
@@ -335,9 +281,9 @@ def process_chunk(message_bytes):
 
 
 def process_ecg_data(abdominal_data, chest_data, timestamp):
-    global model, input_tensor
+    global global_model, input_tensor
 
-    if model is None:
+    if global_model is None:
         return orjson.dumps({"error": "Model is not loaded"}), 500
 
     if len(abdominal_data) != 1024 or len(chest_data) != 1024:
@@ -353,7 +299,7 @@ def process_ecg_data(abdominal_data, chest_data, timestamp):
         start_time = time.time()
         # Perform inference inside the try block
         with torch.no_grad():
-            fetal_ecg, tensor2, maternal_ecg, tensor4 = model(input_tensor)
+            fetal_ecg, tensor2, maternal_ecg, tensor4 = global_model(input_tensor)
 
         # End the timer
         end_time = time.time()

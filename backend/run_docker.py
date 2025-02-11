@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import messagebox
 import os
 
+
 # Function to check if NVIDIA GPU with CUDA support is available
 def check_cuda_gpu_available():
     try:
@@ -14,12 +15,14 @@ def check_cuda_gpu_available():
     except subprocess.CalledProcessError:
         return False  # No CUDA-compatible GPU found
 
+
 def check_docker_installed():
     try:
         subprocess.check_call(['docker', '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     except subprocess.CalledProcessError:
         return False
+
 
 def check_docker_running():
     try:
@@ -28,6 +31,7 @@ def check_docker_running():
     except subprocess.CalledProcessError:
         return False
 
+
 def check_docker_compose_installed():
     try:
         subprocess.check_call(['docker-compose', '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -35,15 +39,18 @@ def check_docker_compose_installed():
     except subprocess.CalledProcessError:
         return False
 
+
 def show_error_message(message):
     root = tk.Tk()
     root.withdraw()  # Hide the root window
     messagebox.showerror("Error", message)
     root.destroy()
 
+
 def run_docker():
     if not check_docker_installed():
-        show_error_message("Docker is not installed. Please install Docker from https://www.docker.com/products/docker-desktop and try again.")
+        show_error_message(
+            "Docker is not installed. Please install Docker from https://www.docker.com/products/docker-desktop and try again.")
         return
 
     if not check_docker_running():
@@ -51,11 +58,13 @@ def run_docker():
         return
 
     if not check_docker_compose_installed():
-        show_error_message("Docker Compose is not installed. Please install Docker Compose from https://docs.docker.com/compose/ and try again.")
+        show_error_message(
+            "Docker Compose is not installed. Please install Docker Compose from https://docs.docker.com/compose/ and try again.")
         return
 
     if not os.path.exists('docker-compose.yml'):
-        show_error_message("No docker-compose.yml file found. Please ensure you're in the correct directory with the Docker Compose file.")
+        show_error_message(
+            "No docker-compose.yml file found. Please ensure you're in the correct directory with the Docker Compose file.")
         return
 
     # Check if CUDA-supported GPU is available
@@ -78,73 +87,6 @@ def run_docker():
         except subprocess.CalledProcessError as e:
             show_error_message(f"An error occurred: {e}")
 
+
 if __name__ == "__main__":
     run_docker()
-
-# #!/usr/bin/env python
-#
-# import subprocess
-# import tkinter as tk
-# from tkinter import messagebox
-# import os
-#
-#
-# def check_docker_installed():
-#     try:
-#         subprocess.check_call(['docker', '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-#         return True
-#     except subprocess.CalledProcessError:
-#         return False
-#
-#
-# def check_docker_running():
-#     try:
-#         subprocess.check_call(['docker', 'info'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-#         return True
-#     except subprocess.CalledProcessError:
-#         return False
-#
-#
-# def check_docker_compose_installed():
-#     try:
-#         subprocess.check_call(['docker-compose', '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-#         return True
-#     except subprocess.CalledProcessError:
-#         return False
-#
-#
-# def show_error_message(message):
-#     root = tk.Tk()
-#     root.withdraw()  # Hide the root window
-#     messagebox.showerror("Error", message)
-#     root.destroy()
-#
-#
-# def run_docker():
-#     if not check_docker_installed():
-#         show_error_message("Docker is not installed. Please install Docker from https://www.docker.com/products/docker-desktop and try again.")
-#         return
-#
-#     if not check_docker_running():
-#         show_error_message("Docker is not running. Please start Docker and try again.")
-#         return
-#
-#     if not check_docker_compose_installed():
-#         show_error_message("Docker Compose is not installed. Please install Docker Compose from https://docs.docker.com/compose/ and try again.")
-#         return
-#
-#     if not os.path.exists('docker-compose.yml'):
-#         show_error_message("No docker-compose.yml file found. Please ensure you're in the correct directory with the Docker Compose file.")
-#         return
-#
-#     try:
-#         # Build the Docker image
-#         subprocess.check_call(['docker-compose', 'build'])
-#         # Run the Docker container with --remove-orphans flag
-#         subprocess.check_call(['docker-compose', 'up', '--remove-orphans'])
-#     except subprocess.CalledProcessError as e:
-#         show_error_message(f"An error occurred: {e}")
-#
-#
-# if __name__ == "__main__":
-#     run_docker()
