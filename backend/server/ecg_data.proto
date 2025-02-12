@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package ecg;
+
+message AbdominalData {
+    repeated float values = 1;
+}
+
+message ChestData {
+    repeated float values = 1;
+}
+
+message CapturedECGData {
+    AbdominalData abdominal_data = 1;
+    ChestData chest_data = 2;
+    string timestamp = 3;
+}
