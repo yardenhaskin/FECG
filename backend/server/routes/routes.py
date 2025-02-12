@@ -244,7 +244,6 @@ def separate_ecg():
         # Calculate and log total processing time
         total_time = time.time() - start_time
         logging.info(f"Total processing time for /separate-ecg-v2: {total_time:.6f} seconds")
-
         return response
 
     except Exception as e:
