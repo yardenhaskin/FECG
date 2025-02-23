@@ -1,5 +1,5 @@
-# from server.HelpFunctions import * # for docker
-from HelpFunctions import *  # for local testing
+from server.HelpFunctions import * # for docker
+# from HelpFunctions import *  # for local testing
 from torch import nn
 
 

@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir -r /app/requirements-true.txt
 EXPOSE 5000
 
 # Stage 2: Runtime image
-FROM python:3.10-alpine3.21 AS runtime
+FROM python:3.10-slim AS runtime
 
 # Set the working directory
 WORKDIR /app
@@ -32,8 +32,12 @@ COPY --from=base /app /app
 COPY --from=base /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 
 # Clean up unnecessary build dependencies (adjust according to what you installed in the base image)
+# Remove unnecessary files and packages using apt commands
 RUN rm -rf /root/.cache \
-    && apk del --no-cache gcc musl-dev libffi-dev
+    && apt-get update \
+    && apt-get remove -y gcc libffi-dev \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
 # Expose the port for the application
 EXPOSE 5000

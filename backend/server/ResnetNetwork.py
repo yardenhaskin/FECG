@@ -149,8 +149,8 @@
 #######
 import torch
 import torch.distributed as dist
-from ResnetBasics import * # for local testing
-# from server.ResnetBasics import * # for docker
+# from ResnetBasics import * # for local testing
+from server.ResnetBasics import * # for docker
 
 
 class ResNetEncoder(nn.Module):

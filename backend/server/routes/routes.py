@@ -8,12 +8,12 @@ import orjson
 from flask import Blueprint, jsonify, request, Response, stream_with_context
 
 # Import local modules
-from ResnetNetwork import *  # for local testing
-from ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for local testing
+# from ResnetNetwork import *  # for local testing
+# from ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for local testing
 
 # Import docker modules
-# from ..ResnetNetwork import *  # for Docker
-# from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for Docker
+from ..ResnetNetwork import *  # for Docker
+from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for Docker
 
 # Append the server directory to sys.path
 sys.path.append('/app/server')
@@ -197,11 +197,11 @@ def load_model():
         # Load the pre-trained model based on the id
         if False:
             # TODO: check if id exists
-            model_path = f"db/models/{model_id}.pt"  # for local testing
-            # model_path = os.path.join(os.getcwd(), f"server/db/models/{model_id}.pt")
+            # model_path = f"db/models/{model_id}.pt"  # for local testing
+            model_path = os.path.join(os.getcwd(), f"server/db/models/{model_id}.pt")
         else:
-            model_path = f"db/models/base_model_16-11-24.pt"  # for local testing
-            # model_path = os.path.join(os.getcwd(), f"db/models/base_model_16-11-24.pt".pt")
+            # model_path = f"db/models/base_model_16-11-24.pt"  # for local testing
+            model_path = os.path.join(os.getcwd(), f"server/db/models/base_model_16-11-24.pt")
         if torch.cuda.is_available():
             logging.info("CUDA is enabled.")
         else:

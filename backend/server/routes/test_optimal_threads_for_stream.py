@@ -9,10 +9,10 @@ import numpy as np
 
 sys.path.append('/app/server')
 
-from ResnetNetwork import *  # for local testing
-from ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for local testing
-# from ..ResnetNetwork import *  # for docker
-# from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for docker
+# from ResnetNetwork import *  # for local testing
+# from ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for local testing
+from ..ResnetNetwork import *  # for docker
+from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for docker
 
 # Global variable for the model
 global_model = None
