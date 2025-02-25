@@ -11,12 +11,12 @@ ARG USE_GPU=false
 RUN pip install --upgrade pip
 
 # Conditionally copy the appropriate requirements file
-COPY requirements-true.txt /app/requirements-true.txt
+COPY requirements-${USE_GPU}.txt /app/requirements-${USE_GPU}.txt
 COPY requirements.txt /app/requirements.txt
 
 # Install dependencies
 RUN pip install --no-cache-dir -r /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements-true.txt
+RUN pip install --no-cache-dir -r /app/requirements-${USE_GPU}.txt
 
 # Expose port for the application (optional in base stage)
 EXPOSE 5000
