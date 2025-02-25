@@ -2,10 +2,8 @@ import os
 import sys
 import time
 import logging
-import threading
-import torch
 import orjson
-from flask import Blueprint, jsonify, request, Response, stream_with_context
+from flask import Blueprint, request
 
 # Import local modules
 # from ResnetNetwork import *  # for local testing
@@ -14,6 +12,8 @@ from flask import Blueprint, jsonify, request, Response, stream_with_context
 # Import docker modules
 from ..ResnetNetwork import *  # for Docker
 from ..ecg_data_pb2 import AbdominalData, ChestData, CapturedECGData  # for Docker
+from ..utils.gpu import start_gpu_warmup  # for Docker
+from ..utils.validation import validate_data_train  # for Docker
 
 # Append the server directory to sys.path
 sys.path.append('/app/server')
@@ -25,140 +25,24 @@ global_model = None
 PROTOBUF_MESSAGE_SIZE_BYTES = 8226
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 input_tensor = torch.empty((1, 2, 1024), dtype=torch.float32, device=DEVICE)
+USER_FILE_PATH = os.path.join(os.getcwd(), "server/db/users/users.json")
+MODEL_DIR = os.path.join(os.getcwd(), "server/db/models/")
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
+if torch.cuda.is_available():
+    logging.info("CUDA is enabled.")
 
-def keep_gpu_warm():
-    """Keeps the GPU active by running periodic inference."""
-    global global_model
-    while True:
-        try:
-            if global_model is not None:
-                with torch.no_grad():
-                    _ = global_model(torch.randn(1, 2, 1024, dtype=torch.float32, device=DEVICE))
-            time.sleep(0.05)  # Adjust based on load
-        except Exception as e:
-            print(f"GPU warm-up thread error: {e}")  # Log errors instead of silent failure
-
-
-# Start the warm-up thread only after model initialization
-def start_gpu_warmup():
-    warmup_thread = threading.Thread(target=keep_gpu_warm, daemon=True)
-    warmup_thread.start()
-
-
-def is_valid_protobuf(data, field, protobuf_class):
-    if field in data:
-        if not isinstance(data[field], protobuf_class):
-            return False, f"{field} must be a {protobuf_class.__name__} instance"
-    return True, ""
-
-
-def validate_data_train(data):
-    # Check if all required fields are present
-    missing_fields = [field for field in ['abdominal_data', 'chest_data', 'timestamp'] if field not in data]
-    if missing_fields:
-        return False, f"Missing required fields: {', '.join(missing_fields)}"
-
-    # Validate individual fields using Protobuf classes
-    for field, protobuf_class in [('abdominal_data', AbdominalData), ('chest_data', ChestData)]:
-        is_valid, error_message = is_valid_protobuf(data, field, protobuf_class)
-        if not is_valid:
-            return False, error_message
-
-    # Validate timestamp format (basic example, can be enhanced)
-    try:
-        time.strptime(data['timestamp'], "%Y-%m-%dT%H:%M:%SZ")
-    except ValueError:
-        return False, "Invalid timestamp format, expected ISO 8601 (e.g., '2024-10-27T12:00:00Z')"
-
-    return True, ""
-
-
-@bp.route('/user/<id>', methods=['GET'])
-def get_user(id):
-    try:
-        # Path to the users directory
-        user_file_path = os.path.join(os.getcwd(), 'server/db/users/users.json')
-
-        # Read the content of the user file
-        with open(user_file_path, 'r') as file:
-            users_data = orjson.loads(file)
-
-        # Find the user with the matching id
-        user_data = next((user for user in users_data['users'] if user['id'] == id), None)
-
-        if user_data is None:
-            return orjson.dumps({"error": "User not found"}), 404
-
-        return jsonify({"user_data": user_data}), 200
-    except Exception as e:
-        return orjson.dumps({"error": str(e)}), 500
-
-
-@bp.route('/user/<id>', methods=['POST'])
-def modify_user(id):
-    try:
-        data = request.get_json()
-        # TODO: Validate the request JSON payload
-        # TODO: parse the request JSON payload
-        # Path to the users directory
-        user_file_path = os.path.join(os.getcwd(), f"server/db/users/users.json")
-
-        with open(user_file_path, 'r') as file:
-            users_data = orjson.loads(file)
-
-        # Find the user with the matching id
-        user_data = next((user for user in users_data['users'] if user['id'] == id), None)
-
-        if user_data is None:
-            # TODO: Add the user to the users file
-            return orjson.dumps({"Success: User added successfully"}), 200
-        else:
-            # TODO: Update the user file
-            return orjson.dumps({"Success: User updated successfully"}), 200
-
-    except Exception as e:
-        return orjson.dumps({"error": str(e)}), 500
-
-
-@bp.route('/user/<id>', methods=['DELETE'])
-def delete_user(id):
-    try:
-        # Path to the users directory
-        user_file_path = os.path.join(os.getcwd(), 'server/db/users/users.json')
-
-        # TODO: also delete model
-
-        with open(user_file_path, 'r') as file:
-            users_data = orjson.loads(file)
-
-        # Find the user with the matching id
-        user_data = next((user for user in users_data['users'] if user['id'] == id), None)
-
-        if user_data is None:
-            return orjson.dumps({"error": "User not found"}), 404
-        else:
-            # Remove the user from the list
-            users_data['users'] = [user for user in users_data['users'] if user['id'] != id]
-
-            # Write the updated data back to the file
-            with open(user_file_path, 'w') as file:
-                orjson.dumps(users_data, file)
-
-            return orjson.dumps({"success": "User deleted successfully"}), 200
-
-    except Exception as e:
-        return orjson.dumps({"error": str(e)}), 500
+else:
+    logging.info("CUDA is not available")
 
 
 @bp.route('/models', methods=['GET'])
 def get_all_models_names():
     try:
         # Path to the models directory
-        models_dir = os.path.join(os.getcwd(), 'server/db/models')
+        models_dir = os.path.join(MODEL_DIR)
 
         # List all files in the models directory
         model_files = os.listdir(models_dir)
@@ -195,23 +79,16 @@ def load_model():
             return orjson.dumps({"error": "ID doesnt match a model"}), 400
 
         # Load the pre-trained model based on the id
-        if False:
-            # TODO: check if id exists
+        if os.path.exists(os.path.join(os.path.join(MODEL_DIR, f"{model_id}.pt"))):
             # model_path = f"db/models/{model_id}.pt"  # for local testing
-            model_path = os.path.join(os.getcwd(), f"server/db/models/{model_id}.pt")
+            model_path = os.path.join(MODEL_DIR, f"{model_id}.pt")
         else:
+            model_id = "base_model_16-11-24"
             # model_path = f"db/models/base_model_16-11-24.pt"  # for local testing
-            model_path = os.path.join(os.getcwd(), f"server/db/models/base_model_16-11-24.pt")
-        if torch.cuda.is_available():
-            logging.info("CUDA is enabled.")
-        else:
-            logging.info("CUDA is not available")
+            model_path = os.path.join(MODEL_DIR, f"base_model_16-11-24.pt")
 
         global_model = torch.load(model_path, map_location=DEVICE)
-
-        # Warm-up GPU
-        # warmup_model(model, DEVICE)
-        start_gpu_warmup()  # Start GPU warm-up thread
+        start_gpu_warmup(global_model)  # Start GPU warm-up thread
 
         return orjson.dumps({
             "status": "success",
