@@ -46,14 +46,16 @@ def run_docker():
     if not check_dependency(['docker', 'info'], "Docker is not running. Please start Docker and try again."):
         return
 
-    if not check_dependency(['docker-compose', '--version'], "Docker Compose is not installed. Please install Docker Compose and try again."):
+    if not check_dependency(['docker-compose', '--version'],
+                            "Docker Compose is not installed. Please install Docker Compose and try again."):
         return
 
     # Get the docker-compose.yml path
     docker_compose_path = get_resource_path('docker-compose.yml')
 
     if not os.path.exists(docker_compose_path):
-        show_error_message("No docker-compose.yml file found. Please ensure you're in the correct directory with the Docker Compose file.")
+        show_error_message(
+            "No docker-compose.yml file found. Please ensure you're in the correct directory with the Docker Compose file.")
         return
 
     # Set environment variable for volume path based on whether running with PyInstaller or not
@@ -80,7 +82,8 @@ def run_docker():
     # Build and run the Docker container with the appropriate GPU settings
     try:
         subprocess.check_call(
-            ['docker-compose', '-f', docker_compose_path, 'build', '--build-arg', f'USE_GPU={str(use_gpu).lower()}'], env=env)
+            ['docker-compose', '-f', docker_compose_path, 'build', '--build-arg', f'USE_GPU={str(use_gpu).lower()}'],
+            env=env)
         subprocess.check_call(['docker-compose', '-f', docker_compose_path, 'up', '--remove-orphans'], env=env)
     except subprocess.CalledProcessError as e:
         show_error_message(f"An error occurred while running Docker: {e}")
