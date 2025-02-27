@@ -8,7 +8,7 @@ services:
       FLASK_ENV: "development"
       PYTHONPATH: "/app"
     volumes:
-      - .:/app
+      - ${BACKEND_VOLUME_PATH}:/app  # Mount the absolute path on your local machine
     deploy:
       resources:
         reservations:
@@ -17,3 +17,4 @@ services:
               count: all
               capabilities: [gpu]
     runtime: ${RUNTIME:-runc}  # Fallback to CPU if RUNTIME is not set
+

@@ -28,7 +28,7 @@ def modify_user(id):
         if not data:
             return orjson.dumps({"error": "Missing JSON payload."}), 400
 
-        is_valid, result = validate_payload(data)
+        is_valid, result = validate_payload(data, id)
         if not is_valid:
             return orjson.dumps({"error": result}), 400
 

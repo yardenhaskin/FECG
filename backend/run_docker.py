@@ -1,45 +1,26 @@
-#!/usr/bin/env python
-
 import subprocess
 import tkinter as tk
 from tkinter import messagebox
 import os
+import sys
 
 
-# Function to check if NVIDIA GPU with CUDA support is available
+# Utility function to check if a command can be run successfully
+def check_dependency(command, error_message):
+    try:
+        subprocess.check_call(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except subprocess.CalledProcessError:
+        show_error_message(error_message)
+        return False
+
+
+# Function to check if CUDA GPU is available
 def check_cuda_gpu_available():
-    try:
-        # Run nvidia-smi to check for GPU availability
-        subprocess.check_call(['nvidia-smi'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True  # CUDA-compatible GPU is available
-    except subprocess.CalledProcessError:
-        return False  # No CUDA-compatible GPU found
+    return check_dependency(['nvidia-smi'], "CUDA-compatible GPU is not available. Ensure your GPU supports CUDA.")
 
 
-def check_docker_installed():
-    try:
-        subprocess.check_call(['docker', '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
-    except subprocess.CalledProcessError:
-        return False
-
-
-def check_docker_running():
-    try:
-        subprocess.check_call(['docker', 'info'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
-    except subprocess.CalledProcessError:
-        return False
-
-
-def check_docker_compose_installed():
-    try:
-        subprocess.check_call(['docker-compose', '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
-    except subprocess.CalledProcessError:
-        return False
-
-
+# Function to display error messages
 def show_error_message(message):
     root = tk.Tk()
     root.withdraw()  # Hide the root window
@@ -47,45 +28,62 @@ def show_error_message(message):
     root.destroy()
 
 
+# Get the path to the extracted resources in PyInstaller bundle
+def get_resource_path(relative_path):
+    try:
+        # PyInstaller stores resources in _MEIPASS during runtime
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+
 def run_docker():
-    if not check_docker_installed():
-        show_error_message(
-            "Docker is not installed. Please install Docker from https://www.docker.com/products/docker-desktop and try again.")
+    # Check if dependencies are installed and running
+    if not check_dependency(['docker', '--version'], "Docker is not installed. Please install Docker and try again."):
         return
 
-    if not check_docker_running():
-        show_error_message("Docker is not running. Please start Docker and try again.")
+    if not check_dependency(['docker', 'info'], "Docker is not running. Please start Docker and try again."):
         return
 
-    if not check_docker_compose_installed():
-        show_error_message(
-            "Docker Compose is not installed. Please install Docker Compose from https://docs.docker.com/compose/ and try again.")
+    if not check_dependency(['docker-compose', '--version'], "Docker Compose is not installed. Please install Docker Compose and try again."):
         return
 
-    if not os.path.exists('docker-compose.yml'):
-        show_error_message(
-            "No docker-compose.yml file found. Please ensure you're in the correct directory with the Docker Compose file.")
+    # Get the docker-compose.yml path
+    docker_compose_path = get_resource_path('docker-compose.yml')
+
+    if not os.path.exists(docker_compose_path):
+        show_error_message("No docker-compose.yml file found. Please ensure you're in the correct directory with the Docker Compose file.")
         return
 
-    # Check if CUDA-supported GPU is available
+    # Set environment variable for volume path based on whether running with PyInstaller or not
+    if hasattr(sys, '_MEIPASS'):
+        backend_volume_path = os.path.abspath(os.path.join(os.path.abspath("."), ".."))
+    else:
+        backend_volume_path = "."
+
+    print("The backend volume path is:", backend_volume_path)
+
+    # Check if CUDA-supported GPU is available and set the appropriate arguments
+    env = os.environ.copy()
+    env['BACKEND_VOLUME_PATH'] = backend_volume_path
+
     if check_cuda_gpu_available():
         print("CUDA-compatible GPU detected! Running Docker container with GPU support...")
-        try:
-            env = os.environ.copy()
-            env['RUNTIME'] = 'nvidia'
-            # Build and run the Docker container with GPU support, passing USE_GPU=true
-            subprocess.check_call(['docker-compose', 'build', '--build-arg', 'USE_GPU=true'])
-            subprocess.check_call(['docker-compose', 'up', '--remove-orphans'])
-        except subprocess.CalledProcessError as e:
-            show_error_message(f"An error occurred: {e}")
+        env['RUNTIME'] = 'nvidia'
+        use_gpu = True
     else:
         print("No CUDA-compatible GPU detected. Running Docker container in CPU-only mode...")
-        try:
-            # Build and run the Docker container in CPU-only mode, passing USE_GPU=false
-            subprocess.check_call(['docker-compose', 'build', '--build-arg', 'USE_GPU=false'])
-            subprocess.check_call(['docker-compose', 'up', '--remove-orphans'])
-        except subprocess.CalledProcessError as e:
-            show_error_message(f"An error occurred: {e}")
+        env['RUNTIME'] = 'cpu'
+        use_gpu = False
+
+    # Build and run the Docker container with the appropriate GPU settings
+    try:
+        subprocess.check_call(
+            ['docker-compose', '-f', docker_compose_path, 'build', '--build-arg', f'USE_GPU={str(use_gpu).lower()}'], env=env)
+        subprocess.check_call(['docker-compose', '-f', docker_compose_path, 'up', '--remove-orphans'], env=env)
+    except subprocess.CalledProcessError as e:
+        show_error_message(f"An error occurred while running Docker: {e}")
 
 
 if __name__ == "__main__":

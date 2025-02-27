@@ -27,14 +27,14 @@ def validate_data_train(data):
     return True, ""
 
 
-def validate_payload(data):
-    required_fields = {"name", "id", "maternal_age", "gestational_age", "clinician_name", "referral_reason",
+def validate_payload(data, id):
+    required_fields = {"name", "maternal_age", "gestational_age", "clinician_name", "referral_reason",
                        "additional_comments"}
     if not isinstance(data, dict) or not required_fields.issubset(data.keys()):
         return False, "Invalid or missing fields in request payload."
 
-    if not isinstance(data['name'], str) or not isinstance(data['id'], str):
-        return False, "Name and ID must be strings."
+    if not isinstance(data['name'], str):
+        return False, "Name must be strings."
 
     try:
         data['maternal_age'] = float(data['maternal_age'])
@@ -42,5 +42,6 @@ def validate_payload(data):
         return False, "Maternal age must be a float."
 
     data['model_path'] = ""
+    data['id'] = id
 
     return True, data
