@@ -89,12 +89,22 @@ def run_docker():
 
     # Build and run the Docker container with the appropriate GPU settings
     try:
+        # Run docker-compose build and up commands
         subprocess.check_call(
             ['docker-compose', '-f', docker_compose_path, 'build', '--build-arg', f'USE_GPU={str(use_gpu).lower()}'],
             env=env)
         subprocess.check_call(['docker-compose', '-f', docker_compose_path, 'up', '--remove-orphans'], env=env)
     except subprocess.CalledProcessError as e:
-        show_error_message(f"An error occurred while running Docker: {e}")
+        # Capture the error message and show it
+        error_message = f"An error occurred while running Docker: {e}\n"
+        error_message += f"Return code: {e.returncode}\n"
+
+        # Optionally, capture stderr if available
+        if e.stderr:
+            error_message += f"stderr: {e.stderr.decode('utf-8')}"
+
+        # Display the error message in a dialog box
+        show_error_message(error_message)
 
 
 if __name__ == "__main__":
