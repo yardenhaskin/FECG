@@ -5,7 +5,7 @@ a = Analysis(
     ['run_docker.py'],
     pathex=[],
     binaries=[],
-    datas=[('requirements-true.txt', '.'), ('requirements-false.txt', '.'), ('docker-compose.yml', '.'), ('requirements.txt', '.'), ('Dockerfile', '.'), ('.dockerignore', '.')],
+    datas=[('requirements-true.txt', '.'), ('requirements-false.txt', '.'), ('docker-compose.yml', '.'), ('requirements.txt', '.'), ('Dockerfile', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
