@@ -1,6 +1,6 @@
 services:
   web:
-    build: .
+    build: ..
     ports:
       - "5000:5000"
     environment:
@@ -16,5 +16,5 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-    runtime: ${RUNTIME:-runc}  # Fallback to CPU if RUNTIME is not set
+    runtime: nvidia
 

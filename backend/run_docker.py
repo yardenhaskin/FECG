@@ -58,14 +58,6 @@ def run_docker():
                             "Docker Compose is not installed. Please install Docker Compose and try again."):
         return
 
-    # Get the docker-compose.yml path
-    docker_compose_path = get_resource_path('docker-compose.yml')
-
-    if not os.path.exists(docker_compose_path):
-        show_error_message(
-            "No docker-compose.yml file found. Please ensure you're in the correct directory with the Docker Compose file.")
-        return
-
     # Set environment variable for volume path based on whether running with PyInstaller or not
     if hasattr(sys, '_MEIPASS'):
         backend_volume_path = os.path.abspath(os.path.join(os.path.abspath("."), ".."))
@@ -80,18 +72,23 @@ def run_docker():
 
     if check_cuda_gpu_available():
         print("CUDA-compatible GPU detected! Running Docker container with GPU support...")
-        env['RUNTIME'] = 'nvidia'
-        use_gpu = True
+        docker_compose_path = get_resource_path('docker-compose.gpu.yml')
+        use_gpu = 'true'
     else:
         print("No CUDA-compatible GPU detected. Running Docker container in CPU-only mode...")
-        env['RUNTIME'] = 'cpu'
-        use_gpu = False
+        docker_compose_path = get_resource_path('docker-compose.cpu.yml')
+        use_gpu = 'false'
+
+    if not os.path.exists(docker_compose_path):
+        show_error_message(
+            "No docker-compose.cpu.yml file found. Please ensure you're in the correct directory with the Docker Compose file.")
+        return
 
     # Build and run the Docker container with the appropriate GPU settings
     try:
         # Run docker-compose build and up commands
         subprocess.check_call(
-            ['docker-compose', '-f', docker_compose_path, 'build', '--build-arg', f'USE_GPU={str(use_gpu).lower()}'],
+            ['docker-compose', '-f', docker_compose_path, 'build', '--build-arg', f'USE_GPU={use_gpu}'],
             env=env)
         subprocess.check_call(['docker-compose', '-f', docker_compose_path, 'up', '--remove-orphans'], env=env)
     except subprocess.CalledProcessError as e:
