@@ -11,7 +11,8 @@ def check_dependency(command, error_message):
         subprocess.check_call(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     except subprocess.CalledProcessError:
-        show_error_message(error_message)
+        if command[0] != 'nvidia-smi':
+            show_error_message(error_message)
         return False
 
 
