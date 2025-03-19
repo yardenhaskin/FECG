@@ -2,3 +2,5 @@
 build/
 
 server/db/models/
+
+.idea/

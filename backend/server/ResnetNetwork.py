@@ -149,8 +149,8 @@
 #######
 import torch
 import torch.distributed as dist
-from ResnetBasics import * # for local testing
-# from server.ResnetBasics import * # for docker
+# from ResnetBasics import * # for local testing
+from server.ResnetBasics import * # for docker
 
 
 class ResNetEncoder(nn.Module):
@@ -269,7 +269,7 @@ class ResNet(nn.Module):
         os.environ['MASTER_ADDR'] = '127.0.0.1'  # Address for rendezvous
         os.environ['MASTER_PORT'] = '12355'  # Port for rendezvous
         if not dist.is_initialized():
-            dist.init_process_group(backend='gloo')
+            dist.init_process_group(backend='gloo', init_method="env://?use_libuv=False")
 
     def forward(self, x):
         # Initialize the process group only once

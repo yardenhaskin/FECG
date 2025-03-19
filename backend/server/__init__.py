@@ -1,8 +1,11 @@
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 import os
 from flask import Flask
-from .routes import routes # For docker
+from .routes import routes  # For docker
+from .routes import user_routes  # For docker
+
+
 # import routes.routes as routes  # for local testing
 
 
@@ -28,6 +31,7 @@ def create_app(test_config=None):
 
     # register the blueprint
     app.register_blueprint(routes.bp)
+    app.register_blueprint(user_routes.bp)
 
     # a simple page that says hello
     @app.route('/')
