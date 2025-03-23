@@ -69,3 +69,17 @@ def delete_user(id):
         return orjson.dumps({"success": "User deleted successfully."}), 200
     except Exception as e:
         return orjson.dumps({"error": str(e)}), 500
+
+
+@bp.route('/user_models/<id>', methods=['GET'])
+def get_all_models_names(id):
+    try:
+        users_data = load_users()
+        user_data = next((user for user in users_data['users'] if user['id'] == id), None)
+
+        if user_data is None:
+            return orjson.dumps({"error": "User not found"}), 404
+
+        return orjson.dumps({"models": user_data.get('models')}), 200
+    except Exception as e:
+        return orjson.dumps({"error": str(e)}), 500

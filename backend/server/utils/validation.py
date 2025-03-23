@@ -41,7 +41,7 @@ def validate_payload(data, id):
     except ValueError:
         return False, "Maternal age must be a float."
 
-    data['model_path'] = ""
+    data['models'] = []
     data['id'] = id
 
     return True, data
