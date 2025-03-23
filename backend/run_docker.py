@@ -107,17 +107,9 @@ def run_docker():
         use_gpu = 'false'
 
     if not os.path.exists(docker_compose_path):
-        # Try to find any docker-compose file as fallback
-        fallback_files = ['docker-compose.yml', 'docker-compose.yaml']
-        for file in fallback_files:
-            path = get_resource_path(file)
-            if os.path.exists(path):
-                docker_compose_path = path
-                break
-        else:
-            show_error_message(
-                f"No docker-compose file found. Please ensure you're in the correct directory with the Docker Compose file.")
-            return
+        show_error_message(
+            f"No docker-compose file found. Please ensure you're in the correct directory with the Docker Compose file.")
+        return
 
     # Build and run the Docker container with the appropriate GPU settings
     try:
