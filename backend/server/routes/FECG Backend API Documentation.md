@@ -49,14 +49,12 @@ Response:
 ```json
 {
   "user_data": {
-    "id": "12345",
     "name": "John Doe",
     "maternal_age": 28.5,
     "gestational_age": 30,
     "clinician_name": "Dr. Smith",
     "referral_reason": "Routine check-up",
-    "additional_comments": "No complications observed.",
-    "model_path": ""
+    "additional_comments": "No complications observed."
   }
 }
 
@@ -154,12 +152,12 @@ Response:
 }
 ```
 
-### List All Models
+### List All Models for User
 
-Retrieves a list of all available model files.
+Retrieves a list of all available model files for a specific user based on his id.
 
 ```
-GET /models
+GET /user_models/<id>
 ```
 
 #### Responses
@@ -167,12 +165,13 @@ GET /models
 | Status Code | Description  | Response Body                                 |
 |-------------|--------------|-----------------------------------------------|
 | 200         | Success      | `{"models": ["model1.pt", "model2.pt", ...]}` |
-| 500         | Server Error | `{"error": "Error message"}`                  |
+| 404         | Not Found    | `{"error": "User not found"}`                 |
+| 500         | Server Error | `{"error": "Error"}`                          |
 
 #### Example
 
 ```
-GET /models
+GET /user_models/12345
 ```
 
 Response:
@@ -181,7 +180,7 @@ Response:
 {
   "models": [
     "base_model_16-11-24.pt",
-    "custom_model_v2.pt"
+    "12345-model.pt"
   ]
 }
 ```

@@ -38,23 +38,6 @@ else:
     logging.info("CUDA is not available")
 
 
-@bp.route('/models', methods=['GET'])
-def get_all_models_names():
-    try:
-        # Path to the models directory
-        models_dir = os.path.join(MODEL_DIR)
-
-        # List all files in the models directory
-        model_files = os.listdir(models_dir)
-
-        # Filter out non-model files if necessary (e.g., by extension)
-        model_names = [f for f in model_files if f.endswith('.pt')]
-
-        return orjson.dumps({"models": model_names}), 200
-    except Exception as e:
-        return orjson.dumps({"error": str(e)}), 500
-
-
 @bp.route('/size', methods=['GET'])  # Get the size of the protobuf message
 def get_size():
     ecg_sample = CapturedECGData(
