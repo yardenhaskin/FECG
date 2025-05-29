@@ -24,7 +24,7 @@ def generate_protobuf_data(iterations=5):
             ecg_data = CapturedECGData(
                 abdominal_data=abdominal_data,
                 chest_data=chest_data,
-                timestamp=f"2024-11-25T12:00:0{i}Z"
+                timestamp=f"2024-11-25T12:00:0{i}Z",
             )
 
             # Serialize the message and yield it
@@ -36,12 +36,8 @@ def generate_protobuf_data(iterations=5):
 # Function to load the model
 def load_model():
     try:
-        headers = {
-            "Content-Type": "application/json"
-        }
-        data = {
-            "id": "12345"
-        }
+        headers = {"Content-Type": "application/json"}
+        data = {"id": "12345"}
         response = requests.post(model_url, headers=headers, json=data)
         if response.status_code == 200:
             print("Model loaded successfully.")

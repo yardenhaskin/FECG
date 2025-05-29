@@ -149,8 +149,9 @@
 #######
 import torch
 import torch.distributed as dist
+
 # from ResnetBasics import * # for local testing
-from server.ResnetBasics import * # for docker
+from server.ResnetBasics import *  # for docker
 
 
 class ResNetEncoder(nn.Module):
@@ -159,10 +160,12 @@ class ResNetEncoder(nn.Module):
     # The output of the Encoder is a Latent Variable vector of these
     # features (both maternal and fetal)
 
-    def __init__(self, in_channels=2, activation='leaky_relu'):
+    def __init__(self, in_channels=2, activation="leaky_relu"):
         super().__init__()
 
-        self.conv1 = nn.Conv1d(in_channels, 16, kernel_size=3, stride=2, padding=1, bias=False)
+        self.conv1 = nn.Conv1d(
+            in_channels, 16, kernel_size=3, stride=2, padding=1, bias=False
+        )
         self.batch = nn.BatchNorm1d(16)
         self.relu = activation_func(activation)
 
@@ -214,8 +217,15 @@ class ResnetDecoder(nn.Module):
     def __init__(self, out_channels=1):
         super().__init__()
 
-        self.conv_out = nn.ConvTranspose1d(16, out_channels, kernel_size=3, stride=2, padding=2, output_padding=0,
-                                           bias=False)
+        self.conv_out = nn.ConvTranspose1d(
+            16,
+            out_channels,
+            kernel_size=3,
+            stride=2,
+            padding=2,
+            output_padding=0,
+            bias=False,
+        )
         self.batch_norm = nn.BatchNorm1d(16)
 
         self.block1 = ResNetBasicBlockDecoder(1024, 1024)
@@ -257,6 +267,7 @@ class ResnetDecoder(nn.Module):
 
 class ResNet(nn.Module):
     _process_group_initialized = False  # Class-level flag to track initialization
+
     def __init__(self, in_channels, *args, **kwargs):
         super().__init__()
         self.encoder = ResNetEncoder(in_channels, *args, **kwargs)
@@ -264,12 +275,14 @@ class ResNet(nn.Module):
         self.Fdecoder = ResnetDecoder()
 
     def _initialize_process_group(self):
-        os.environ['RANK'] = '0'  # Process rank (e.g., 0 for master process)
-        os.environ['WORLD_SIZE'] = '1'  # Total number of processes
-        os.environ['MASTER_ADDR'] = '127.0.0.1'  # Address for rendezvous
-        os.environ['MASTER_PORT'] = '12355'  # Port for rendezvous
+        os.environ["RANK"] = "0"  # Process rank (e.g., 0 for master process)
+        os.environ["WORLD_SIZE"] = "1"  # Total number of processes
+        os.environ["MASTER_ADDR"] = "127.0.0.1"  # Address for rendezvous
+        os.environ["MASTER_PORT"] = "12355"  # Port for rendezvous
         if not dist.is_initialized():
-            dist.init_process_group(backend='gloo', init_method="env://?use_libuv=False")
+            dist.init_process_group(
+                backend="gloo", init_method="env://?use_libuv=False"
+            )
 
     def forward(self, x):
         # Initialize the process group only once
@@ -294,9 +307,10 @@ class ResNet(nn.Module):
         # Ensure tensor is contiguous
         tensor = tensor.contiguous()
 
-
         # Prepare an empty list to gather tensors across processes
-        tensors_gather = [torch.zeros_like(tensor) for _ in range(dist.get_world_size())]
+        tensors_gather = [
+            torch.zeros_like(tensor) for _ in range(dist.get_world_size())
+        ]
 
         # Perform the all_gather operation
         dist.all_gather(tensors_gather, tensor)
@@ -305,6 +319,7 @@ class ResNet(nn.Module):
         gathered = torch.cat(tensors_gather, dim=0)
 
         return gathered
+
 
 ######
 # from ResnetBasics import *

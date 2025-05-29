@@ -4,37 +4,36 @@
 # source: backend/server/ecg_data.proto
 # Protobuf Python Version: 5.28.2
 """Generated protocol buffer code."""
+
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
 from google.protobuf import runtime_version as _runtime_version
 from google.protobuf import symbol_database as _symbol_database
 from google.protobuf.internal import builder as _builder
+
 _runtime_version.ValidateProtobufRuntimeVersion(
-    _runtime_version.Domain.PUBLIC,
-    5,
-    28,
-    2,
-    '',
-    'backend/server/ecg_data.proto'
+    _runtime_version.Domain.PUBLIC, 5, 28, 2, "", "backend/server/ecg_data.proto"
 )
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
 
 
-
-
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1d\x62\x61\x63kend/server/ecg_data.proto\x12\x03\x65\x63g\"\x1f\n\rAbdominalData\x12\x0e\n\x06values\x18\x01 \x03(\x02\"\x1b\n\tChestData\x12\x0e\n\x06values\x18\x01 \x03(\x02\"t\n\x0f\x43\x61pturedECGData\x12*\n\x0e\x61\x62\x64ominal_data\x18\x01 \x01(\x0b\x32\x12.ecg.AbdominalData\x12\"\n\nchest_data\x18\x02 \x01(\x0b\x32\x0e.ecg.ChestData\x12\x11\n\ttimestamp\x18\x03 \x01(\tb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
+    b'\n\x1d\x62\x61\x63kend/server/ecg_data.proto\x12\x03\x65\x63g"\x1f\n\rAbdominalData\x12\x0e\n\x06values\x18\x01 \x03(\x02"\x1b\n\tChestData\x12\x0e\n\x06values\x18\x01 \x03(\x02"t\n\x0f\x43\x61pturedECGData\x12*\n\x0e\x61\x62\x64ominal_data\x18\x01 \x01(\x0b\x32\x12.ecg.AbdominalData\x12"\n\nchest_data\x18\x02 \x01(\x0b\x32\x0e.ecg.ChestData\x12\x11\n\ttimestamp\x18\x03 \x01(\tb\x06proto3'
+)
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
-_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'backend.server.ecg_data_pb2', _globals)
+_builder.BuildTopDescriptorsAndMessages(
+    DESCRIPTOR, "backend.server.ecg_data_pb2", _globals
+)
 if not _descriptor._USE_C_DESCRIPTORS:
-  DESCRIPTOR._loaded_options = None
-  _globals['_ABDOMINALDATA']._serialized_start=38
-  _globals['_ABDOMINALDATA']._serialized_end=69
-  _globals['_CHESTDATA']._serialized_start=71
-  _globals['_CHESTDATA']._serialized_end=98
-  _globals['_CAPTUREDECGDATA']._serialized_start=100
-  _globals['_CAPTUREDECGDATA']._serialized_end=216
+    DESCRIPTOR._loaded_options = None
+    _globals["_ABDOMINALDATA"]._serialized_start = 38
+    _globals["_ABDOMINALDATA"]._serialized_end = 69
+    _globals["_CHESTDATA"]._serialized_start = 71
+    _globals["_CHESTDATA"]._serialized_end = 98
+    _globals["_CAPTUREDECGDATA"]._serialized_start = 100
+    _globals["_CAPTUREDECGDATA"]._serialized_end = 216
 # @@protoc_insertion_point(module_scope)

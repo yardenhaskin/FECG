@@ -4,14 +4,16 @@ import os
 from ..utils.validation import validate_payload
 from ..utils.file_operations import load_users, save_users
 
-bp = Blueprint('user_routes', __name__)
+bp = Blueprint("user_routes", __name__)
 
 
-@bp.route('/user/<id>', methods=['GET'])
+@bp.route("/user/<id>", methods=["GET"])
 def get_user(id):
     try:
         users_data = load_users()
-        user_data = next((user for user in users_data['users'] if user['id'] == id), None)
+        user_data = next(
+            (user for user in users_data["users"] if user["id"] == id), None
+        )
 
         if user_data is None:
             return orjson.dumps({"error": "User not found"}), 404
@@ -21,7 +23,7 @@ def get_user(id):
         return orjson.dumps({"error": str(e)}), 500
 
 
-@bp.route('/user/<id>', methods=['POST'])
+@bp.route("/user/<id>", methods=["POST"])
 def modify_user(id):
     try:
         data = request.get_json()
@@ -34,10 +36,12 @@ def modify_user(id):
 
         users_data = load_users()
 
-        user_data = next((user for user in users_data['users'] if user['id'] == id), None)
+        user_data = next(
+            (user for user in users_data["users"] if user["id"] == id), None
+        )
 
         if user_data is None:
-            users_data['users'].append(result)
+            users_data["users"].append(result)
             save_users(users_data)
             return orjson.dumps({"success": "User added successfully."}), 201
         else:
@@ -49,20 +53,22 @@ def modify_user(id):
         return orjson.dumps({"error": str(e)}), 500
 
 
-@bp.route('/user/<id>', methods=['DELETE'])
+@bp.route("/user/<id>", methods=["DELETE"])
 def delete_user(id):
     try:
         users_data = load_users()
-        user_data = next((user for user in users_data['users'] if user['id'] == id), None)
+        user_data = next(
+            (user for user in users_data["users"] if user["id"] == id), None
+        )
 
         if user_data is None:
             return orjson.dumps({"error": "User not found"}), 404
 
-        users_data['users'] = [user for user in users_data['users'] if user['id'] != id]
+        users_data["users"] = [user for user in users_data["users"] if user["id"] != id]
         save_users(users_data)
 
         # Delete the corresponding model data
-        model_path = user_data.get('model_path')
+        model_path = user_data.get("model_path")
         if model_path != "" and os.path.exists(model_path):
             os.remove(model_path)
 
@@ -71,15 +77,17 @@ def delete_user(id):
         return orjson.dumps({"error": str(e)}), 500
 
 
-@bp.route('/user_models/<id>', methods=['GET'])
+@bp.route("/user_models/<id>", methods=["GET"])
 def get_all_models_names(id):
     try:
         users_data = load_users()
-        user_data = next((user for user in users_data['users'] if user['id'] == id), None)
+        user_data = next(
+            (user for user in users_data["users"] if user["id"] == id), None
+        )
 
         if user_data is None:
             return orjson.dumps({"error": "User not found"}), 404
 
-        return orjson.dumps({"models": user_data.get('models')}), 200
+        return orjson.dumps({"models": user_data.get("models")}), 200
     except Exception as e:
         return orjson.dumps({"error": str(e)}), 500
