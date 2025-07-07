@@ -77,7 +77,7 @@ def load_model():
             orjson.dumps(
                 {
                     "status": "success",
-                    "message": "Model loaded successfully.",
+                    "message": "Model loaded successfully",
                     "model_id": model_id,
                 }
             ),

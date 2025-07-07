@@ -60,9 +60,9 @@ Response:
 
 ```
 
-### Create or Update User
+### Create User
 
-Creates a new user or updates an existing user's information.
+Creates a new user.
 
 ```
 POST /user/{id}
@@ -80,12 +80,12 @@ JSON object containing user data. The specific fields required are handled by th
 
 #### Responses
 
-| Status Code | Description  | Response Body                               |
-|-------------|--------------|---------------------------------------------|
-| 200         | Updated      | `{"success": "User updated successfully."}` |
-| 201         | Created      | `{"success": "User added successfully."}`   |
-| 400         | Bad Request  | `{"error": "Validation error message"}`     |
-| 500         | Server Error | `{"error": "Error message"}`                |
+| Status Code | Description  | Response Body                              |
+|-------------|--------------|--------------------------------------------|
+| 200         | Created      | `{"success": "User created successfully"}` |
+| 400         | Bad Request  | `{"error": "Validation error message"}`    |
+| 409         | Bad Request  | `{"error": "User already exists"}`         |
+| 500         | Server Error | `{"error": "Error message"}`               |
 
 #### Example
 
@@ -112,7 +112,63 @@ Response:
 
 ```json
 {
-  "success": "User updated successfully."
+  "success": "User created successfully"
+}
+```
+
+### Create User
+
+Creates a new user.
+
+```
+PUT /user/{id}
+```
+
+#### Path Parameters
+
+| Parameter | Type   | Description    |
+|-----------|--------|----------------|
+| id        | string | Unique user ID |
+
+#### Request Body
+
+JSON object containing user data. The specific fields required are handled by the `validate_payload` function.
+
+#### Responses
+
+| Status Code | Description  | Response Body                              |
+|-------------|--------------|--------------------------------------------|
+| 200         | Created      | `{"success": "User created successfully"}` |
+| 400         | Bad Request  | `{"error": "Validation error message"}`    |
+| 404         | Bad Request  | `{"error": "User not found"}`              |
+| 500         | Server Error | `{"error": "Error message"}`               |
+
+#### Example
+
+```
+POST /user/12345
+Content-Type: application/json
+
+{
+  "user_data": {
+    "id": "12345",
+    "name": "John Doe",
+    "maternal_age": 28.5,
+    "gestational_age": 31,
+    "clinician_name": "Dr. Smith",
+    "referral_reason": "Routine check-up",
+    "additional_comments": "No complications observed.",
+    "model_path": ""
+  }
+}
+
+```
+
+Response:
+
+```json
+{
+  "success": "User updated successfully"
 }
 ```
 
@@ -132,11 +188,11 @@ DELETE /user/{id}
 
 #### Responses
 
-| Status Code | Description  | Response Body                               |
-|-------------|--------------|---------------------------------------------|
-| 200         | Success      | `{"success": "User deleted successfully."}` |
-| 404         | Not Found    | `{"error": "User not found"}`               |
-| 500         | Server Error | `{"error": "Error message"}`                |
+| Status Code | Description  | Response Body                              |
+|-------------|--------------|--------------------------------------------|
+| 200         | Success      | `{"success": "User deleted successfully"}` |
+| 404         | Not Found    | `{"error": "User not found"}`              |
+| 500         | Server Error | `{"error": "Error message"}`               |
 
 #### Example
 
@@ -231,11 +287,11 @@ POST /load-model
 
 #### Responses
 
-| Status Code | Description  | Response Body                                                                            |
-|-------------|--------------|------------------------------------------------------------------------------------------|
-| 200         | Success      | `{"status": "success", "message": "Model loaded successfully.", "model_id": "model_id"}` |
-| 400         | Bad Request  | `{"error": "ID doesnt match a model"}`                                                   |
-| 500         | Server Error | `{"error": "Error message"}`                                                             |
+| Status Code | Description  | Response Body                                                                           |
+|-------------|--------------|-----------------------------------------------------------------------------------------|
+| 200         | Success      | `{"status": "success", "message": "Model loaded successfully", "model_id": "model_id"}` |
+| 400         | Bad Request  | `{"error": "ID doesnt match a model"}`                                                  |
+| 500         | Server Error | `{"error": "Error message"}`                                                            |
 
 #### Notes
 
@@ -258,7 +314,7 @@ Response:
 ```json
 {
   "status": "success",
-  "message": "Model loaded successfully.",
+  "message": "Model loaded successfully",
   "model_id": "custom_model_v2"
 }
 ```
@@ -292,10 +348,11 @@ Binary Protobuf message containing the ECG data in the `CapturedECGData` format 
 ```json
 {
   "timestamp_data": "2024-10-27T12:00:00Z",
-  "fetal_ecg_data": [[...]],
-  "tensor2_data": [[...]],
-  "maternal_ecg_data": [[...]],
-  "tensor4_data": [[...]]
+  "fetal_ecg_data": [[1, 2, 3, ..., 1024]],
+  "tensor2_data": [[1, 2, 3, ..., 1024]],
+  "maternal_ecg_data": [[1, 2, 3, ..., 1024]],
+  "tensor4_data": [[1, 2, 3, ..., 1024]]
+  ]
 }
 ```
 
