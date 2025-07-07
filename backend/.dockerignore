@@ -4,3 +4,7 @@ __pycache__
 server_115155.ico
 *.pyc
 *.pyo
+
+checks.py
+
+run_docker.py
