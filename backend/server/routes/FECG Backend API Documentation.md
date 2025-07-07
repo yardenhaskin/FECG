@@ -283,14 +283,38 @@ Binary Protobuf message containing the ECG data in the `CapturedECGData` format 
 
 | Status Code | Description  | Response Body                                                      |
 |-------------|--------------|--------------------------------------------------------------------|
-| 200         | Success      | *Response format is not specified in the provided code*            |
+| 200         | Success      | JSON object containing separated ECG data (see example below)      |
+| 400         | Bad Request  | `{"error": "Validation error message"}`                            |
 | 500         | Server Error | `{"error": "Model is not loaded"}` or `{"error": "Error message"}` |
+
+#### Successful Response Format
+
+```json
+{
+  "timestamp_data": "2024-10-27T12:00:00Z",
+  "fetal_ecg_data": [[...]],
+  "tensor2_data": [[...]],
+  "maternal_ecg_data": [[...]],
+  "tensor4_data": [[...]]
+}
+```
+
+#### Response Fields
+
+| Field             | Type   | Description                             |
+|-------------------|--------|-----------------------------------------|
+| timestamp_data    | string | Original timestamp from the input data  |
+| fetal_ecg_data    | array  | Separated fetal ECG signal data         |
+| tensor2_data      | array  | Additional tensor output from the model |
+| maternal_ecg_data | array  | Separated maternal ECG signal data      |
+| tensor4_data      | array  | Additional tensor output from the model |
 
 #### Notes
 
 - A model must be loaded via the `/load-model` endpoint before using this endpoint.
 - The endpoint measures and logs processing time.
 - The request must be a valid Protobuf message in the expected format.
+- Input data arrays must contain exactly 1024 elements each.
 
 #### Example
 

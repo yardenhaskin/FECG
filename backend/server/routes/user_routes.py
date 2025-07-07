@@ -45,7 +45,7 @@ def modify_user(id):
             save_users(users_data)
             return orjson.dumps({"success": "User added successfully."}), 201
         else:
-            user_data.update(result)
+            user_data.update(result) # TODO: check if this works
             save_users(users_data)
             return orjson.dumps({"success": "User updated successfully."}), 200
 
